@@ -1,7 +1,9 @@
 import React from 'react';
 import { Zap, Bell, Database, Radio } from 'lucide-react';
 
-export default function Navbar({ activeDataset = 'UCI Household Power Consumption', alertCount = 0 }) {
+export default function Navbar({ backendStatus = 'checking', activeTab = 'dashboard', selectedDatasetId = null, activeDataset = null, alertCount = 0 }) {
+  const datasetLabel = selectedDatasetId ? `Dataset #${selectedDatasetId}` : (activeDataset || 'No dataset loaded');
+
   return (
     <header style={{
       height: '70px',
@@ -79,7 +81,7 @@ export default function Navbar({ activeDataset = 'UCI Household Power Consumptio
         }}>
           <Database size={14} color="var(--electric-blue)" />
           <span style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {activeDataset}
+            {datasetLabel}
           </span>
         </div>
 

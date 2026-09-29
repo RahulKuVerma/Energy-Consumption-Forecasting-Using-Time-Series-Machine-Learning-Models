@@ -131,7 +131,7 @@ export default function AnalyticsPage({ selectedDatasetId }) {
           <BarChart3 size={20} color="var(--electric-blue)" />
           <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>Daily Energy Consumption Trend (Last 30 Days)</h3>
         </div>
-        <HistoricalChart dailyData={analytics?.daily_trend || []} height={220} />
+        <HistoricalChart data={analytics?.daily_trend || []} type="daily" height={220} />
       </div>
 
       {/* Hourly Profile Heatmap */}

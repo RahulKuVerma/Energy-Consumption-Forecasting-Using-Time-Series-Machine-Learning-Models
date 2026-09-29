@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { UploadCloud, FileText, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
 
-export default function FileUpload({ onUploadSuccess }) {
+export default function FileUpload({ onFileUploaded, onUploadSuccess }) {
   const [isDragging, setIsDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
@@ -48,7 +48,8 @@ export default function FileUpload({ onUploadSuccess }) {
 
     try {
       const res = await api.uploadFile(file);
-      onUploadSuccess(res);
+      if (onFileUploaded) onFileUploaded(file, res);
+      if (onUploadSuccess) onUploadSuccess(res);
     } catch (err) {
       setError(err.message || 'Error uploading file.');
     } finally {

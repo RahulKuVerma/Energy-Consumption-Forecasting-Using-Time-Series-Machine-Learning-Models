@@ -187,7 +187,7 @@ export default function DashboardPage({ selectedDatasetId, selectedModel, onSele
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Last 7 days · kWh/day</p>
             </div>
           </div>
-          <HistoricalChart dailyData={analytics?.daily_trend || []} height={240} />
+          <HistoricalChart data={analytics?.daily_trend || []} type="daily" height={240} />
         </div>
       </div>
 
