@@ -3,13 +3,21 @@ import os
 from pathlib import Path
 from contextlib import contextmanager
 from typing import Generator
-from backend.app.core.config import settings
+
+# Resilient import handling depending on execution working directory
+try:
+    from app.core.config import settings
+except ImportError:
+    from backend.app.core.config import settings
+
 
 def dict_factory(cursor, row):
+    """Converts SQLite tuple rows into standard Python dictionaries."""
     d = {}
     for idx, col in enumerate(cursor.description):
         d[col[0]] = row[idx]
     return d
+
 
 @contextmanager
 def get_db_connection() -> Generator[sqlite3.Connection, None, None]:
@@ -29,9 +37,17 @@ def get_db_connection() -> Generator[sqlite3.Connection, None, None]:
     finally:
         conn.close()
 
+
+def get_db():
+    """FastAPI dependency helper for database injection in API routes."""
+    with get_db_connection() as conn:
+        yield conn
+
+
 def init_db(force: bool = False):
     """Initializes the database using schema.sql and seed.sql if not exists or if forced."""
     db_file = settings.DATABASE_PATH
+    db_file.parent.mkdir(parents=True, exist_ok=True)
     db_exists = db_file.exists() and db_file.stat().st_size > 0
 
     schema_file = settings.DATABASE_PATH.parent / "schema.sql"

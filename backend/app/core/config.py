@@ -1,10 +1,16 @@
 import os
 from pathlib import Path
+
+# Fallback handling across Pydantic v2, v1, and standard Python
 try:
+    # pyrefly: ignore [missing-import]
     from pydantic_settings import BaseSettings
 except ImportError:
-    class BaseSettings:
-        pass
+    try:
+        from pydantic import BaseSettings
+    except ImportError:
+        class BaseSettings:
+            pass
 
 # Resolve base directories
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
@@ -13,10 +19,11 @@ UPLOAD_DIR = BASE_DIR / "uploads"
 ML_DIR = BASE_DIR / "ml"
 DATABASE_DIR = BASE_DIR / "database"
 
-class Settings:
+class Settings(BaseSettings):
     PROJECT_NAME: str = "Energy Consumption Forecasting API"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api"
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "super_secret_jwt_key_change_in_production")
     
     # Server
     HOST: str = os.getenv("HOST", "0.0.0.0")
@@ -27,10 +34,11 @@ class Settings:
     DATABASE_PATH: Path = DATABASE_DIR / "energy_forecasting.db"
     DATABASE_URL: str = os.getenv("DATABASE_URL", f"sqlite:///{DATABASE_PATH.as_posix()}")
     
-    # Storage Paths
+    # Storage Paths & Uploads
     RAW_UPLOAD_DIR: Path = UPLOAD_DIR / "raw"
     PROCESSED_UPLOAD_DIR: Path = UPLOAD_DIR / "processed"
     TEMP_UPLOAD_DIR: Path = UPLOAD_DIR / "temporary"
+    ALLOWED_EXTENSIONS: set = {"csv", "xlsx", "txt"}
     
     # ML Models
     MODEL_DIR: Path = ML_DIR / "saved_models"
