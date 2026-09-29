@@ -21,7 +21,7 @@ def create_forecast(req: ForecastRequest):
 
 @router.get("/quick")
 def quick_forecast(
-    model: str = Query("xgboost", regex="^(linear_regression|xgboost|lstm)$"),
+    model: str = Query("xgboost", pattern="^(linear_regression|xgboost|lstm)$"),
     horizon: int = Query(24, ge=6, le=336),
     dataset_id: Optional[int] = None
 ):

@@ -28,7 +28,7 @@ def get_dataset_readings(
     dataset_id: int,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
-    sort: str = Query("asc", regex="^(asc|desc)$")
+    sort: str = Query("asc", pattern="^(asc|desc)$")
 ):
     offset = (page - 1) * page_size
     with get_db_connection() as conn:
