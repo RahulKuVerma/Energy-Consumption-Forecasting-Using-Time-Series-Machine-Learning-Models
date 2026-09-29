@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from datetime import datetime
 
 # --- Dataset Schemas ---
@@ -8,8 +8,8 @@ class DatasetBase(BaseModel):
     filename: str
     row_count: int
     sampling_rate: Optional[str] = "1 Hour"
-    start_timestamp: Optional[str] = None
-    end_timestamp: Optional[str] = None
+    start_timestamp: Optional[Any] = None
+    end_timestamp: Optional[Any] = None
     status: Optional[str] = "processed"
 
 class DatasetCreate(DatasetBase):
@@ -20,7 +20,7 @@ class DatasetResponse(DatasetBase):
     id: int
     file_path: str
     file_size_bytes: int
-    created_at: str
+    created_at: Optional[Any] = None
 
 # --- Reading Schemas ---
 class EnergyReadingItem(BaseModel):
@@ -54,7 +54,7 @@ class MLModelResponse(BaseModel):
     r2_score: Optional[float] = None
     hyperparameters: Optional[Dict[str, Any]] = None
     is_active: bool
-    trained_at: Optional[str] = None
+    trained_at: Optional[Any] = None
 
 # --- Forecast Schemas ---
 class ForecastRequest(BaseModel):
@@ -64,7 +64,7 @@ class ForecastRequest(BaseModel):
     granularity: str = "hourly"
 
 class ForecastItem(BaseModel):
-    timestamp: str
+    timestamp: Any
     predicted_value: float
     lower_bound: Optional[float] = None
     upper_bound: Optional[float] = None
@@ -81,7 +81,7 @@ class ForecastResponse(BaseModel):
     total_energy_kwh: float
     metrics_summary: Optional[Dict[str, Any]] = None
     forecast_items: List[ForecastItem]
-    created_at: str
+    created_at: Optional[Any] = None
 
 # --- Analytics Schemas ---
 class SubmeteringBreakdown(BaseModel):
@@ -94,7 +94,7 @@ class AnalyticsSummaryResponse(BaseModel):
     total_consumption_kwh: float
     avg_hourly_kw: float
     peak_demand_kw: float
-    peak_timestamp: Optional[str] = None
+    peak_timestamp: Optional[Any] = None
     estimated_cost: float
     estimated_co2_kg: float
     submetering: SubmeteringBreakdown
@@ -111,9 +111,9 @@ class AlertItem(BaseModel):
     metric_name: str
     actual_value: Optional[float] = None
     threshold_value: Optional[float] = None
-    timestamp: str
+    timestamp: Any
     is_resolved: bool
-    created_at: str
+    created_at: Optional[Any] = None
 
 class AlertCreate(BaseModel):
     alert_type: str

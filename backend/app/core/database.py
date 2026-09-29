@@ -16,7 +16,6 @@ def get_db_connection() -> Generator[sqlite3.Connection, None, None]:
     """Context manager for SQLite database connection returning dictionary rows."""
     conn = sqlite3.connect(
         str(settings.DATABASE_PATH),
-        detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES,
         timeout=30.0
     )
     conn.row_factory = dict_factory

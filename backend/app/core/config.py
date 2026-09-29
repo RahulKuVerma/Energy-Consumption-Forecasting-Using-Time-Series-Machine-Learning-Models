@@ -1,6 +1,10 @@
 import os
 from pathlib import Path
-from pydantic_settings import BaseSettings if "BaseSettings" in globals() else object
+try:
+    from pydantic_settings import BaseSettings
+except ImportError:
+    class BaseSettings:
+        pass
 
 # Resolve base directories
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
