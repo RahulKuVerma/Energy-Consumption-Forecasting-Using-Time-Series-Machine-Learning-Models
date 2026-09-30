@@ -44,6 +44,16 @@ export default function DashboardPage({ selectedDatasetId, selectedModel, settin
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [modelSaveError, setModelSaveError] = useState('');
+
+  const handleModelChange = async (model) => {
+    setModelSaveError('');
+    try {
+      await onSelectModel(model);
+    } catch (err) {
+      setModelSaveError(err.message || 'Could not save the selected model.');
+    }
+  };
 
   const fetchData = async (showRefreshing = false) => {
     if (showRefreshing) setRefreshing(true);
@@ -87,7 +97,7 @@ export default function DashboardPage({ selectedDatasetId, selectedModel, settin
           <select
             id="dashboard-model-select"
             value={selectedModel}
-            onChange={(e) => onSelectModel(e.target.value)}
+            onChange={(e) => handleModelChange(e.target.value)}
             style={{
               background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)',
               color: 'var(--text-primary)', borderRadius: 'var(--radius-md)',
@@ -111,6 +121,7 @@ export default function DashboardPage({ selectedDatasetId, selectedModel, settin
           </button>
         </div>
       </div>
+      {modelSaveError && <p role="alert" style={{ color: 'var(--alert-rose)', marginTop: '-1.5rem', marginBottom: '1.5rem' }}>{modelSaveError}</p>}
 
       {/* KPI Cards */}
       <div className="grid-cols-4" style={{ marginBottom: '1.75rem' }}>

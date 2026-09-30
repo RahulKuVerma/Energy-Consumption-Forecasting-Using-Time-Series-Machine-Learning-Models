@@ -4,6 +4,7 @@ import Navbar from './components/Navbar.jsx';
 import DashboardPage from './pages/DashboardPage.jsx';
 import ForecastPage from './pages/ForecastPage.jsx';
 import UploadPage from './pages/UploadPage.jsx';
+import DatasetLibraryPage from './pages/DatasetLibraryPage.jsx';
 import AnalyticsPage from './pages/AnalyticsPage.jsx';
 import ModelsPage from './pages/ModelsPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
@@ -40,6 +41,15 @@ export default function App() {
     return savedSettings;
   };
 
+  const selectModel = async (model) => {
+    const savedSettings = await api.saveSettings({
+      ...systemSettings,
+      default_model: model,
+    });
+    setSystemSettings(savedSettings);
+    setSelectedModel(savedSettings.default_model);
+  };
+
   const renderPage = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -48,7 +58,7 @@ export default function App() {
             selectedDatasetId={selectedDatasetId}
             selectedModel={selectedModel}
             settings={systemSettings}
-            onSelectModel={setSelectedModel}
+            onSelectModel={selectModel}
           />
         );
       case 'forecast':
@@ -68,6 +78,15 @@ export default function App() {
               setSelectedDatasetId(id);
               setActiveTab('dashboard');
             }}
+          />
+        );
+      case 'datasets':
+        return (
+          <DatasetLibraryPage
+            selectedDatasetId={selectedDatasetId}
+            onSelectDataset={setSelectedDatasetId}
+            onOpenDashboard={() => setActiveTab('dashboard')}
+            onOpenUpload={() => setActiveTab('upload')}
           />
         );
       case 'analytics':

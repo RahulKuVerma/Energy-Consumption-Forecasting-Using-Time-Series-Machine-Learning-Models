@@ -5,6 +5,7 @@ import {
   TrendingUp, 
   BarChart3, 
   Cpu, 
+  Database,
   Settings as SettingsIcon,
   ShieldCheck
 } from 'lucide-react';
@@ -14,6 +15,7 @@ export default function Sidebar({ activeTab, onSelectTab }) {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'forecast', label: 'Forecast Studio', icon: TrendingUp },
     { id: 'upload', label: 'Upload Data', icon: UploadCloud },
+    { id: 'datasets', label: 'Dataset Library', icon: Database },
     { id: 'analytics', label: 'Analytics & Insights', icon: BarChart3 },
     { id: 'models', label: 'Model Benchmarks', icon: Cpu },
     { id: 'settings', label: 'Settings', icon: SettingsIcon },
