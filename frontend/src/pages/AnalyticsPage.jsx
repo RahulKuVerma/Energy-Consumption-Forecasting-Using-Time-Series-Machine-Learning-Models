@@ -54,7 +54,7 @@ function HourlyHeatmap({ hourlyProfile }) {
   );
 }
 
-export default function AnalyticsPage({ selectedDatasetId, settings }) {
+export default function AnalyticsPage({ selectedDatasetId, activeDataset, settings }) {
   const [analytics, setAnalytics] = useState(null);
   const [anomalies, setAnomalies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -93,7 +93,7 @@ export default function AnalyticsPage({ selectedDatasetId, settings }) {
             Analytics & Insights
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Diurnal profiles, consumption trends, anomaly detection, and cost analysis
+            Data source: {activeDataset?.name || 'All datasets'}
           </p>
         </div>
         <button

@@ -36,7 +36,7 @@ const HORIZON_OPTIONS = [
   { label: '7 Days', value: 168 },
 ];
 
-export default function ForecastPage({ selectedDatasetId, selectedModel, settings, onSelectModel }) {
+export default function ForecastPage({ selectedDatasetId, activeDataset, selectedModel, settings, onSelectModel }) {
   const [model, setModel] = useState(selectedModel || 'xgboost');
   const [horizon, setHorizon] = useState(settings.default_horizon);
   const [forecast, setForecast] = useState(null);
@@ -82,7 +82,7 @@ export default function ForecastPage({ selectedDatasetId, selectedModel, setting
           Forecast Studio
         </h1>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Configure model, select horizon, and generate time-series energy forecasts
+          Data source: {activeDataset?.name || 'All datasets'}
         </p>
       </div>
 

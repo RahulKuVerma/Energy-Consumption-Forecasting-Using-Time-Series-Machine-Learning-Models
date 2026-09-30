@@ -2,7 +2,7 @@ import React from 'react';
 import { Zap, Database } from 'lucide-react';
 
 export default function Navbar({ backendStatus = 'checking', activeTab = 'dashboard', selectedDatasetId = null, activeDataset = null, alertCount = 0 }) {
-  const datasetLabel = selectedDatasetId ? `Dataset #${selectedDatasetId}` : activeDataset;
+  const datasetLabel = activeDataset?.name || (selectedDatasetId ? `Dataset #${selectedDatasetId}` : null);
 
   return (
     <header style={{

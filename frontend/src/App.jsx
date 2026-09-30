@@ -12,7 +12,11 @@ import { api, DEFAULT_SYSTEM_SETTINGS } from './services/api.js';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [selectedDatasetId, setSelectedDatasetId] = useState(null);
+  const [selectedDatasetId, setSelectedDatasetId] = useState(() => {
+    const savedId = Number(localStorage.getItem('activeDatasetId'));
+    return Number.isInteger(savedId) && savedId > 0 ? savedId : null;
+  });
+  const [activeDataset, setActiveDataset] = useState(null);
   const [selectedModel, setSelectedModel] = useState('xgboost');
   const [backendStatus, setBackendStatus] = useState('checking');
   const [systemSettings, setSystemSettings] = useState(DEFAULT_SYSTEM_SETTINGS);
@@ -20,6 +24,28 @@ export default function App() {
   useEffect(() => {
     document.documentElement.dataset.theme = systemSettings.theme;
   }, [systemSettings.theme]);
+
+  useEffect(() => {
+    if (!selectedDatasetId) {
+      setActiveDataset(null);
+      return;
+    }
+
+    api.getDataset(selectedDatasetId)
+      .then(setActiveDataset)
+      .catch(() => {
+        setActiveDataset(null);
+        setSelectedDatasetId(null);
+        localStorage.removeItem('activeDatasetId');
+      });
+  }, [selectedDatasetId]);
+
+  const selectDataset = (datasetId) => {
+    const id = Number(datasetId);
+    if (!Number.isInteger(id) || id < 1) return;
+    localStorage.setItem('activeDatasetId', String(id));
+    setSelectedDatasetId(id);
+  };
 
   // Check backend health on mount
   useEffect(() => {
@@ -56,6 +82,7 @@ export default function App() {
         return (
           <DashboardPage
             selectedDatasetId={selectedDatasetId}
+            activeDataset={activeDataset}
             selectedModel={selectedModel}
             settings={systemSettings}
             onSelectModel={selectModel}
@@ -65,6 +92,7 @@ export default function App() {
         return (
           <ForecastPage
             selectedDatasetId={selectedDatasetId}
+            activeDataset={activeDataset}
             selectedModel={selectedModel}
             settings={systemSettings}
             onSelectModel={setSelectedModel}
@@ -75,7 +103,7 @@ export default function App() {
           <UploadPage
             defaultResampleFreq={systemSettings.resample_freq}
             onDatasetLoaded={(id) => {
-              setSelectedDatasetId(id);
+              selectDataset(id);
               setActiveTab('dashboard');
             }}
           />
@@ -84,13 +112,13 @@ export default function App() {
         return (
           <DatasetLibraryPage
             selectedDatasetId={selectedDatasetId}
-            onSelectDataset={setSelectedDatasetId}
+            onSelectDataset={selectDataset}
             onOpenDashboard={() => setActiveTab('dashboard')}
             onOpenUpload={() => setActiveTab('upload')}
           />
         );
       case 'analytics':
-        return <AnalyticsPage selectedDatasetId={selectedDatasetId} settings={systemSettings} />;
+        return <AnalyticsPage selectedDatasetId={selectedDatasetId} activeDataset={activeDataset} settings={systemSettings} />;
       case 'models':
         return (
           <ModelsPage
@@ -113,6 +141,7 @@ export default function App() {
           backendStatus={backendStatus}
           activeTab={activeTab}
           selectedDatasetId={selectedDatasetId}
+          activeDataset={activeDataset}
         />
         <main className="page-wrapper">
           {renderPage()}

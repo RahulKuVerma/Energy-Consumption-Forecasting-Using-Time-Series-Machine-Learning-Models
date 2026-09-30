@@ -38,7 +38,7 @@ function StatCard({ icon: Icon, label, value, sub, color = 'var(--electric-blue)
   );
 }
 
-export default function DashboardPage({ selectedDatasetId, selectedModel, settings, onSelectModel }) {
+export default function DashboardPage({ selectedDatasetId, activeDataset, selectedModel, settings, onSelectModel }) {
   const [analytics, setAnalytics] = useState(null);
   const [forecast, setForecast] = useState(null);
   const [alerts, setAlerts] = useState([]);
@@ -89,7 +89,7 @@ export default function DashboardPage({ selectedDatasetId, selectedModel, settin
             Energy Overview
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Consumption and forecast based on recorded dataset readings
+            Data source: {activeDataset?.name || 'All datasets'}
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>

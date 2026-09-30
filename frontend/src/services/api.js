@@ -52,6 +52,7 @@ export const api = {
 
   // Datasets
   getDatasets: () => request('/datasets'),
+  getDataset: (datasetId) => request(`/datasets/${datasetId}`),
   getDatasetReadings: (datasetId, page = 1, pageSize = 50) => 
     request(`/datasets/${datasetId}/readings?page=${page}&page_size=${pageSize}`),
   deleteDataset: (datasetId) => 

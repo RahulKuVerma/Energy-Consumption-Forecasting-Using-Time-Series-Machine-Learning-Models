@@ -29,16 +29,18 @@ export default function UploadPage({ onDatasetLoaded, defaultResampleFreq }) {
     setProcessing(true);
     setError(null);
     try {
-      const result = await api.processDataset(file_path, dataset_name, column_mapping, resample_freq);
+      const response = await api.processDataset(file_path, dataset_name, column_mapping, resample_freq);
+      const result = response.data ?? response;
+      if (!result.dataset_id) throw new Error('Dataset was processed but no dataset ID was returned.');
       setProcessedDatasetId(result.dataset_id);
       // Load preview
       try {
         const readingsData = await api.getDatasetReadings(result.dataset_id, 1, 50);
         setPreviewReadings(readingsData.readings || []);
-        setPreviewTotal(readingsData.total || 0);
+        setPreviewTotal(readingsData.total_count ?? result.row_count ?? 0);
       } catch (_) {
         setPreviewReadings([]);
-        setPreviewTotal(result.rows_ingested || 0);
+        setPreviewTotal(result.row_count || 0);
       }
       setStep(2);
     } catch (err) {
