@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Optional
 from datetime import datetime
-from backend.app.core.config import settings
 from backend.app.core.database import get_db_connection
+from backend.app.services.system_settings_service import get_system_settings
 
 class AlertService:
     @staticmethod
@@ -58,16 +58,21 @@ class AlertService:
         power = float(reading.get("global_active_power", 0.0))
         voltage = float(reading.get("voltage", 230.0))
         ts = reading.get("timestamp", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        system_settings = get_system_settings()
 
-        if power >= settings.PEAK_ALERT_THRESHOLD_KW:
+        if not system_settings["alerts_enabled"]:
+            return None
+
+        peak_threshold = system_settings["peak_threshold_kw"]
+        if power >= peak_threshold:
             return AlertService.create_alert(
                 alert_type="peak_load",
-                severity="critical" if power > settings.PEAK_ALERT_THRESHOLD_KW * 1.3 else "high",
+                severity="critical" if power > peak_threshold * 1.3 else "high",
                 title="Critical Peak Load Threshold Exceeded",
-                message=f"Current active demand of {power:.2f} kW exceeded threshold of {settings.PEAK_ALERT_THRESHOLD_KW:.2f} kW.",
+                message=f"Current active demand of {power:.2f} kW exceeded threshold of {peak_threshold:.2f} kW.",
                 metric_name="global_active_power",
                 actual_value=power,
-                threshold_value=settings.PEAK_ALERT_THRESHOLD_KW,
+                threshold_value=peak_threshold,
                 timestamp=ts
             )
         elif voltage < 210.0 or voltage > 255.0:

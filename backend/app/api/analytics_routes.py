@@ -12,7 +12,7 @@ def get_analytics_summary(dataset_id: Optional[int] = None):
 @router.get("/anomalies")
 def get_anomalies(
     dataset_id: Optional[int] = None,
-    threshold: float = Query(2.5, ge=1.0, le=5.0)
+    threshold: Optional[float] = Query(None, ge=1.0, le=5.0)
 ):
     """Returns detected consumption anomalies exceeding statistical z-score."""
     return analytics_service.detect_anomalies(dataset_id, z_threshold=threshold)

@@ -8,7 +8,8 @@ export const formatEnergy = (kwh) => {
   return `${Number(kwh).toFixed(2)} kWh`;
 };
 
-export const formatCurrency = (amount, symbol = '$') => {
+export const formatCurrency = (amount, currency = 'USD') => {
+  const symbol = { USD: '$', EUR: '€', GBP: '£', INR: '₹' }[currency] || '$';
   if (amount === undefined || amount === null || isNaN(amount)) return `${symbol}0.00`;
   return `${symbol}${Number(amount).toFixed(2)}`;
 };

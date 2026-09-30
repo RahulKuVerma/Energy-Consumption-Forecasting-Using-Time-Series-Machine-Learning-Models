@@ -54,19 +54,21 @@ function HourlyHeatmap({ hourlyProfile }) {
   );
 }
 
-export default function AnalyticsPage({ selectedDatasetId }) {
+export default function AnalyticsPage({ selectedDatasetId, settings }) {
   const [analytics, setAnalytics] = useState(null);
   const [anomalies, setAnomalies] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [zThreshold, setZThreshold] = useState(2.5);
+  const [zThreshold, setZThreshold] = useState(settings.anomaly_zscore_threshold);
   const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => setZThreshold(settings.anomaly_zscore_threshold), [settings.anomaly_zscore_threshold]);
 
   const fetchData = async (showRefresh = false) => {
     if (showRefresh) setRefreshing(true);
     try {
       const [ana, anoms] = await Promise.all([
         api.getAnalyticsSummary(selectedDatasetId),
-        api.getAnomalies(zThreshold),
+        api.getAnomalies(zThreshold, selectedDatasetId),
       ]);
       setAnalytics(ana);
       setAnomalies(Array.isArray(anoms) ? anoms : []);
@@ -110,7 +112,7 @@ export default function AnalyticsPage({ selectedDatasetId }) {
         {[
           { icon: BarChart3, label: 'Total Consumption', value: formatEnergy(analytics?.total_consumption_kwh), color: 'var(--electric-blue)' },
           { icon: Flame, label: 'Peak Demand', value: formatPower(analytics?.peak_demand_kw), color: 'var(--energy-amber)' },
-          { icon: TrendingDown, label: 'Estimated Cost', value: formatCurrency(analytics?.estimated_cost), color: 'var(--eco-emerald)' },
+          { icon: TrendingDown, label: 'Estimated Cost', value: formatCurrency(analytics?.estimated_cost, settings.currency), color: 'var(--eco-emerald)' },
           { icon: Clock, label: 'CO₂ Footprint', value: formatCarbon(analytics?.estimated_co2_kg), color: 'var(--deep-purple)' },
         ].map(({ icon: Icon, label, value, color }) => (
           <div key={label} className="glass-card" style={{ padding: '1.25rem' }}>

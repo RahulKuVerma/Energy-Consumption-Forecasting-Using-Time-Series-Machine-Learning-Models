@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any, Union, Literal
 from datetime import datetime
 
 # --- Dataset Schemas ---
@@ -131,3 +131,15 @@ class SystemSettingItem(BaseModel):
     value: str
     description: Optional[str] = None
     updated_at: Optional[str] = None
+
+class SystemSettings(BaseModel):
+    theme: Literal["dark", "light"] = "dark"
+    peak_threshold_kw: float = Field(default=4.5, ge=0.5, le=20)
+    anomaly_zscore_threshold: float = Field(default=2.5, ge=1, le=5)
+    kwh_rate: float = Field(default=0.18, ge=0, le=2)
+    co2_factor: float = Field(default=0.233, ge=0.01, le=2)
+    default_model: Literal["linear_regression", "xgboost", "lstm"] = "xgboost"
+    default_horizon: Literal[6, 12, 24, 48, 72, 168] = 24
+    resample_freq: Literal["15min", "30min", "1h", "1D"] = "1h"
+    alerts_enabled: bool = True
+    currency: Literal["USD", "EUR", "GBP", "INR"] = "USD"

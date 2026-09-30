@@ -26,7 +26,7 @@ export default function Sidebar({ activeTab, onSelectTab }) {
       top: 0,
       left: 0,
       bottom: 0,
-      background: 'rgba(15, 23, 42, 0.95)',
+      background: 'var(--surface-sidebar)',
       backdropFilter: 'blur(20px)',
       borderRight: '1px solid var(--border-subtle)',
       display: 'flex',

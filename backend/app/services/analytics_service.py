@@ -1,9 +1,8 @@
 from typing import Dict, Any, List, Optional
 import pandas as pd
-import numpy as np
 from datetime import datetime
-from backend.app.core.config import settings
 from backend.app.core.database import get_db_connection
+from backend.app.services.system_settings_service import get_system_settings
 from backend.app.utils.unit_converter import calculate_energy_cost, calculate_carbon_footprint_kg
 
 class AnalyticsService:
@@ -30,33 +29,17 @@ class AnalyticsService:
             rows = cursor.fetchall()
 
         if not rows:
-            # Fallback realistic baseline if database hasn't ingested yet
             return {
-                "total_consumption_kwh": 342.5,
-                "avg_hourly_kw": 1.42,
-                "peak_demand_kw": 4.68,
-                "peak_timestamp": "2026-09-28 19:00:00",
-                "estimated_cost": calculate_energy_cost(342.5, settings.KWH_COST_RATE),
-                "estimated_co2_kg": calculate_carbon_footprint_kg(342.5),
-                "submetering": {
-                    "kitchen_kwh": 68.5,
-                    "laundry_kwh": 51.4,
-                    "climate_kwh": 137.0,
-                    "other_kwh": 85.6
-                },
-                "daily_trend": [
-                    {"date": "2026-09-23", "kwh": 48.2, "peak_kw": 4.1},
-                    {"date": "2026-09-24", "kwh": 51.6, "peak_kw": 4.3},
-                    {"date": "2026-09-25", "kwh": 46.8, "peak_kw": 3.9},
-                    {"date": "2026-09-26", "kwh": 54.2, "peak_kw": 4.5},
-                    {"date": "2026-09-27", "kwh": 49.3, "peak_kw": 4.2},
-                    {"date": "2026-09-28", "kwh": 52.8, "peak_kw": 4.7},
-                    {"date": "2026-09-29", "kwh": 39.6, "peak_kw": 3.8}
-                ],
-                "hourly_profile": [
-                    {"hour": h, "avg_kw": round(0.8 + 0.6 * np.sin((h - 6) * np.pi / 12) + (1.2 if 18 <= h <= 21 else 0.1), 2)}
-                    for h in range(24)
-                ]
+                "has_data": False,
+                "total_consumption_kwh": None,
+                "avg_hourly_kw": None,
+                "peak_demand_kw": None,
+                "peak_timestamp": None,
+                "estimated_cost": None,
+                "estimated_co2_kg": None,
+                "submetering": None,
+                "daily_trend": [],
+                "hourly_profile": []
             }
 
         df = pd.DataFrame(rows)
@@ -98,13 +81,15 @@ class AnalyticsService:
             for _, r in daily_grp.tail(30).iterrows()
         ]
 
+        system_settings = get_system_settings()
         return {
+            "has_data": True,
             "total_consumption_kwh": total_kwh,
             "avg_hourly_kw": avg_kw,
             "peak_demand_kw": peak_kw,
             "peak_timestamp": peak_ts,
-            "estimated_cost": calculate_energy_cost(total_kwh, settings.KWH_COST_RATE),
-            "estimated_co2_kg": calculate_carbon_footprint_kg(total_kwh),
+            "estimated_cost": calculate_energy_cost(total_kwh, system_settings["kwh_rate"]),
+            "estimated_co2_kg": calculate_carbon_footprint_kg(total_kwh, system_settings["co2_factor"]),
             "submetering": {
                 "kitchen_kwh": sub1_kwh,
                 "laundry_kwh": sub2_kwh,
@@ -116,7 +101,7 @@ class AnalyticsService:
         }
 
     @staticmethod
-    def detect_anomalies(dataset_id: Optional[int] = None, z_threshold: float = 2.5) -> List[Dict[str, Any]]:
+    def detect_anomalies(dataset_id: Optional[int] = None, z_threshold: Optional[float] = None) -> List[Dict[str, Any]]:
         """
         Detects power anomalies where active power deviates more than z_threshold from rolling mean.
         """
@@ -134,6 +119,8 @@ class AnalyticsService:
         if not rows:
             return []
 
+        threshold = z_threshold if z_threshold is not None else get_system_settings()["anomaly_zscore_threshold"]
+
         df = pd.DataFrame(rows)
         mean_val = df["global_active_power"].mean()
         std_val = df["global_active_power"].std()
@@ -142,7 +129,7 @@ class AnalyticsService:
             return []
 
         df["z_score"] = (df["global_active_power"] - mean_val) / std_val
-        anomalies = df[df["z_score"].abs() >= z_threshold]
+        anomalies = df[df["z_score"].abs() >= threshold]
 
         results = []
         for _, row in anomalies.iterrows():

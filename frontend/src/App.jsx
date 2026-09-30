@@ -7,20 +7,38 @@ import UploadPage from './pages/UploadPage.jsx';
 import AnalyticsPage from './pages/AnalyticsPage.jsx';
 import ModelsPage from './pages/ModelsPage.jsx';
 import SettingsPage from './pages/SettingsPage.jsx';
-import { api } from './services/api.js';
+import { api, DEFAULT_SYSTEM_SETTINGS } from './services/api.js';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedDatasetId, setSelectedDatasetId] = useState(null);
   const [selectedModel, setSelectedModel] = useState('xgboost');
   const [backendStatus, setBackendStatus] = useState('checking');
+  const [systemSettings, setSystemSettings] = useState(DEFAULT_SYSTEM_SETTINGS);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = systemSettings.theme;
+  }, [systemSettings.theme]);
 
   // Check backend health on mount
   useEffect(() => {
     api.getHealth()
       .then(() => setBackendStatus('online'))
       .catch(() => setBackendStatus('offline'));
+    api.getSettings()
+      .then((savedSettings) => {
+        setSystemSettings(savedSettings);
+        setSelectedModel(savedSettings.default_model);
+      })
+      .catch((error) => console.error('Settings load error:', error));
   }, []);
+
+  const saveSettings = async (nextSettings) => {
+    const savedSettings = await api.saveSettings(nextSettings);
+    setSystemSettings(savedSettings);
+    setSelectedModel(savedSettings.default_model);
+    return savedSettings;
+  };
 
   const renderPage = () => {
     switch (activeTab) {
@@ -29,6 +47,7 @@ export default function App() {
           <DashboardPage
             selectedDatasetId={selectedDatasetId}
             selectedModel={selectedModel}
+            settings={systemSettings}
             onSelectModel={setSelectedModel}
           />
         );
@@ -37,12 +56,14 @@ export default function App() {
           <ForecastPage
             selectedDatasetId={selectedDatasetId}
             selectedModel={selectedModel}
+            settings={systemSettings}
             onSelectModel={setSelectedModel}
           />
         );
       case 'upload':
         return (
           <UploadPage
+            defaultResampleFreq={systemSettings.resample_freq}
             onDatasetLoaded={(id) => {
               setSelectedDatasetId(id);
               setActiveTab('dashboard');
@@ -50,7 +71,7 @@ export default function App() {
           />
         );
       case 'analytics':
-        return <AnalyticsPage selectedDatasetId={selectedDatasetId} />;
+        return <AnalyticsPage selectedDatasetId={selectedDatasetId} settings={systemSettings} />;
       case 'models':
         return (
           <ModelsPage
@@ -59,7 +80,7 @@ export default function App() {
           />
         );
       case 'settings':
-        return <SettingsPage />;
+        return <SettingsPage initialSettings={systemSettings} onSaveSettings={saveSettings} />;
       default:
         return <DashboardPage selectedDatasetId={selectedDatasetId} selectedModel={selectedModel} />;
     }

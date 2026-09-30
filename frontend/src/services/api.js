@@ -21,15 +21,34 @@ async function request(url, options = {}) {
   return res.json();
 }
 
+export const DEFAULT_SYSTEM_SETTINGS = {
+  theme: 'dark',
+  peak_threshold_kw: 4.5,
+  anomaly_zscore_threshold: 2.5,
+  kwh_rate: 0.18,
+  co2_factor: 0.233,
+  default_model: 'xgboost',
+  default_horizon: 24,
+  resample_freq: '1h',
+  alerts_enabled: true,
+  currency: 'USD',
+};
+
 export const api = {
   // Health & Status
   getHealth: () => request('/health'),
+  getSettings: () => request('/settings'),
+  saveSettings: (settings) => request('/settings', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings),
+  }),
 
   // Analytics
   getAnalyticsSummary: (datasetId) => 
     request(`/analytics/summary${datasetId ? `?dataset_id=${datasetId}` : ''}`),
-  getAnomalies: (threshold = 2.5) => 
-    request(`/analytics/anomalies?threshold=${threshold}`),
+  getAnomalies: (threshold = 2.5, datasetId = null) =>
+    request(`/analytics/anomalies?threshold=${threshold}${datasetId ? `&dataset_id=${datasetId}` : ''}`),
 
   // Datasets
   getDatasets: () => request('/datasets'),
@@ -75,8 +94,8 @@ export const api = {
         dataset_id: datasetId,
       }),
     }),
-  getQuickForecast: (modelName = 'xgboost', horizon = 24) => 
-    request(`/forecast/quick?model=${modelName}&horizon=${horizon}`),
+  getQuickForecast: (modelName = 'xgboost', horizon = 24, datasetId = null) =>
+    request(`/forecast/quick?model=${modelName}&horizon=${horizon}${datasetId ? `&dataset_id=${datasetId}` : ''}`),
   getForecastHistory: () => request('/forecast/history'),
   getForecastDetail: (id) => request(`/forecast/${id}`),
 

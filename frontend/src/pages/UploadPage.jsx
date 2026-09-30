@@ -7,7 +7,7 @@ import DataPreview from '../components/DataPreview.jsx';
 
 const STEPS = ['Upload File', 'Map Columns', 'Preview & Import'];
 
-export default function UploadPage({ onDatasetLoaded }) {
+export default function UploadPage({ onDatasetLoaded, defaultResampleFreq }) {
   const [step, setStep] = useState(0);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [uploadResult, setUploadResult] = useState(null);
@@ -176,6 +176,7 @@ export default function UploadPage({ onDatasetLoaded }) {
               uploadResult={uploadResult}
               onProcess={handleProcess}
               processing={processing}
+              defaultResampleFreq={defaultResampleFreq}
             />
             <button
               id="back-step0-btn"

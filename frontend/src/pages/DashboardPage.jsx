@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Zap, TrendingUp, DollarSign, Leaf, AlertTriangle, 
-  RefreshCw, Activity, Clock, ChevronRight
+  RefreshCw, Activity, Clock
 } from 'lucide-react';
 import { api } from '../services/api.js';
 import ForecastChart from '../components/ForecastChart.jsx';
@@ -10,7 +10,7 @@ import AlertCard from '../components/AlertCard.jsx';
 import Loading from '../components/Loading.jsx';
 import { formatEnergy, formatPower, formatCurrency, formatCarbon, formatDateTime } from '../utils/formatters.js';
 
-function StatCard({ icon: Icon, label, value, sub, color = 'var(--electric-blue)', trend = null }) {
+function StatCard({ icon: Icon, label, value, sub, color = 'var(--electric-blue)' }) {
   return (
     <div className="glass-card" style={{ padding: '1.5rem', position: 'relative', overflow: 'hidden' }}>
       <div style={{
@@ -34,19 +34,11 @@ function StatCard({ icon: Icon, label, value, sub, color = 'var(--electric-blue)
       {sub && (
         <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>{sub}</div>
       )}
-      {trend !== null && (
-        <div style={{
-          marginTop: '0.5rem', fontSize: '0.78rem', fontWeight: '600',
-          color: trend >= 0 ? 'var(--alert-rose)' : 'var(--eco-emerald)'
-        }}>
-          {trend >= 0 ? '▲' : '▼'} {Math.abs(trend).toFixed(1)}% vs yesterday
-        </div>
-      )}
     </div>
   );
 }
 
-export default function DashboardPage({ selectedDatasetId, selectedModel, onSelectModel }) {
+export default function DashboardPage({ selectedDatasetId, selectedModel, settings, onSelectModel }) {
   const [analytics, setAnalytics] = useState(null);
   const [forecast, setForecast] = useState(null);
   const [alerts, setAlerts] = useState([]);
@@ -56,14 +48,16 @@ export default function DashboardPage({ selectedDatasetId, selectedModel, onSele
   const fetchData = async (showRefreshing = false) => {
     if (showRefreshing) setRefreshing(true);
     try {
-      const [ana, fc, alrts] = await Promise.all([
+      const [ana, alrts] = await Promise.all([
         api.getAnalyticsSummary(selectedDatasetId),
-        api.getQuickForecast(selectedModel, 24),
-        api.getAlerts(false),
+        settings.alerts_enabled ? api.getAlerts(false) : Promise.resolve([]),
       ]);
       setAnalytics(ana);
-      setForecast(fc);
       setAlerts(Array.isArray(alrts) ? alrts.slice(0, 4) : []);
+      setForecast(null);
+      setForecast(ana?.has_data
+        ? await api.getQuickForecast(selectedModel, settings.default_horizon, selectedDatasetId)
+        : null);
     } catch (err) {
       console.error('Dashboard fetch error:', err);
     } finally {
@@ -72,7 +66,7 @@ export default function DashboardPage({ selectedDatasetId, selectedModel, onSele
     }
   };
 
-  useEffect(() => { fetchData(); }, [selectedDatasetId, selectedModel]);
+  useEffect(() => { fetchData(); }, [selectedDatasetId, selectedModel, settings.default_horizon, settings.alerts_enabled]);
 
   if (loading) return <Loading message="Loading energy dashboard..." />;
 
@@ -82,10 +76,10 @@ export default function DashboardPage({ selectedDatasetId, selectedModel, onSele
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
         <div>
           <h1 className="gradient-text" style={{ fontSize: '2rem', marginBottom: '0.35rem' }}>
-            Energy Intelligence Hub
+            Energy Overview
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Real-time electrical consumption overview · {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            Consumption and forecast based on recorded dataset readings
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
@@ -123,31 +117,29 @@ export default function DashboardPage({ selectedDatasetId, selectedModel, onSele
         <StatCard
           icon={Zap}
           label="Total Consumption"
-          value={formatEnergy(analytics?.total_consumption_kwh)}
+          value={analytics?.has_data ? formatEnergy(analytics.total_consumption_kwh) : '—'}
           sub="Dataset period aggregate"
           color="var(--electric-blue)"
-          trend={2.4}
         />
         <StatCard
           icon={Activity}
           label="Avg Demand"
-          value={formatPower(analytics?.avg_hourly_kw)}
+          value={analytics?.has_data ? formatPower(analytics.avg_hourly_kw) : '—'}
           sub="Mean active power draw"
           color="var(--electric-cyan)"
         />
         <StatCard
           icon={TrendingUp}
           label="Peak Demand"
-          value={formatPower(analytics?.peak_demand_kw)}
-          sub={analytics?.peak_timestamp ? `At ${formatDateTime(analytics.peak_timestamp)}` : 'Highest recorded'}
+          value={analytics?.has_data ? formatPower(analytics.peak_demand_kw) : '—'}
+          sub={analytics?.has_data && analytics.peak_timestamp ? `At ${formatDateTime(analytics.peak_timestamp)}` : 'Highest recorded'}
           color="var(--energy-amber)"
-          trend={-1.2}
         />
         <StatCard
           icon={DollarSign}
           label="Estimated Cost"
-          value={formatCurrency(analytics?.estimated_cost)}
-          sub={`${formatCarbon(analytics?.estimated_co2_kg)} CO₂ emitted`}
+          value={analytics?.has_data ? formatCurrency(analytics.estimated_cost, settings.currency) : '—'}
+          sub={analytics?.has_data ? `${formatCarbon(analytics.estimated_co2_kg)} CO₂ emitted` : 'No recorded readings'}
           color="var(--eco-emerald)"
         />
       </div>
@@ -160,7 +152,7 @@ export default function DashboardPage({ selectedDatasetId, selectedModel, onSele
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
               <TrendingUp size={20} color="var(--electric-blue)" />
               <div>
-                <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>24-Hour Forecast</h3>
+                <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>{settings.default_horizon}-Hour Forecast</h3>
                 <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
                   {selectedModel.replace('_', ' ')} · 95% CI band
                 </p>
@@ -175,7 +167,13 @@ export default function DashboardPage({ selectedDatasetId, selectedModel, onSele
               </div>
             )}
           </div>
-          <ForecastChart forecastItems={forecast?.forecast_items || []} height={240} />
+          {forecast ? (
+            <ForecastChart forecastItems={forecast.forecast_items} height={240} />
+          ) : (
+            <div style={{ height: 240, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+              {analytics?.has_data ? 'Forecast is unavailable.' : 'Upload a dataset to view a forecast.'}
+            </div>
+          )}
         </div>
 
         {/* Daily Trend */}
@@ -198,7 +196,7 @@ export default function DashboardPage({ selectedDatasetId, selectedModel, onSele
           <h3 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '1.25rem' }}>
             ⚡ Sub-metering Breakdown
           </h3>
-          {analytics?.submetering && (
+          {analytics?.has_data && analytics.submetering ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {[
                 { label: 'Kitchen & Dishwasher', key: 'kitchen_kwh', color: 'var(--electric-blue)' },
@@ -229,6 +227,10 @@ export default function DashboardPage({ selectedDatasetId, selectedModel, onSele
                 );
               })}
             </div>
+          ) : (
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+              Upload a dataset to view sub-metering data.
+            </div>
           )}
         </div>
 
@@ -243,13 +245,17 @@ export default function DashboardPage({ selectedDatasetId, selectedModel, onSele
               <span className="badge badge-danger">{alerts.length} Active</span>
             )}
           </div>
-          {alerts.length === 0 ? (
+          {!settings.alerts_enabled ? (
+            <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', fontSize: '0.88rem' }}>
+              Alerts are disabled in Settings.
+            </div>
+          ) : alerts.length === 0 ? (
             <div style={{
               textAlign: 'center', padding: '2rem 1rem',
               color: 'var(--text-muted)', fontSize: '0.88rem'
             }}>
               <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>✅</div>
-              No active anomaly alerts.<br />System operating normally.
+              No active anomaly alerts.
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { CheckCircle2, ArrowRight, Settings2, Play } from 'lucide-react';
 
-export default function ColumnMapping({ uploadResult, onProcess, processing }) {
+export default function ColumnMapping({ uploadResult, onProcess, processing, defaultResampleFreq = '1h' }) {
   const { filename, detected_delimiter, columns, suggested_mappings, file_path } = uploadResult;
   
   const [datasetName, setDatasetName] = useState(filename.replace(/\.[^/.]+$/, ""));
-  const [resampleFreq, setResampleFreq] = useState('1h');
+  const [resampleFreq, setResampleFreq] = useState(defaultResampleFreq);
   const [mapping, setMapping] = useState({ ...suggested_mappings });
 
   const canonicalTargets = [
@@ -101,7 +101,9 @@ export default function ColumnMapping({ uploadResult, onProcess, processing }) {
             }}
           >
             <option value="15min">15 Minutes (High Resolution)</option>
+            <option value="30min">30 Minutes</option>
             <option value="1h">1 Hour (Standard Model Default)</option>
+            <option value="1D">1 Day</option>
           </select>
         </div>
       </div>

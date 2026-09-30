@@ -36,9 +36,9 @@ const HORIZON_OPTIONS = [
   { label: '7 Days', value: 168 },
 ];
 
-export default function ForecastPage({ selectedDatasetId, selectedModel, onSelectModel }) {
+export default function ForecastPage({ selectedDatasetId, selectedModel, settings, onSelectModel }) {
   const [model, setModel] = useState(selectedModel || 'xgboost');
-  const [horizon, setHorizon] = useState(24);
+  const [horizon, setHorizon] = useState(settings.default_horizon);
   const [forecast, setForecast] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
